@@ -1,29 +1,67 @@
-# 水曜のDX道場 2026/09/16 発表用構築コード集
+# 水曜のDX道場 第3回（Agentic AI）構築コード集
 
-## 1. はじめに
+「水曜のDX道場」の「AI技術の『仕組み』を学び直すシリーズ」第3回（テーマ：Agentic AI、開催日：2026/9/16）のハンズオンで使用する構築コード・資料一式です。
 
-「AI技術の『仕組み』を学び直すシリーズ」第3回（Agentic AI）のハンズオンで使用する構築コード一式です。
-架空の通販サイト「ポチッとモール」（本・雑誌ECサイト）のカスタマーサポートAIチームを、Difyのマルチエージェント構成（コンシェルジュ＋専門家3人）で構築します。
+シリーズの過去回：Step1 RAG（7/15実施）、Step2 MCP（8/19実施）。今回はStep3として、複数のAIエージェントが役割分担しながら連携する「Agentic AI（マルチエージェント）」を、実際に手を動かして構築・体験します。
 
-- 専門家B（注文・商品情報スペシャリスト）・専門家C（配送追跡スペシャリスト）のデータストアはSupabase（PostgreSQL）
-- Difyの公式Supabaseプラグイン（Get Rows / Create a Row / Update Row(s) / Delete Row(s)）をカスタムツールとしてエージェントに持たせ、固定のHTTPノードではなくエージェントが自律的にツールを呼ぶ構成にする
-- ECサイトDBと配送会社DBは別組織の体を取っているため、Supabaseの**Projectを2つ**に分けて構築する（1 Project = 1 Postgresデータベースのため）
+## 1. このリポジトリは何か
+
+架空のオンライン書店「ポチッとモール」（運営会社：株式会社ポチッとブックス）のカスタマーサポートAIチームを、Dify上にマルチエージェント構成で構築するためのソース一式です。参加者は、本リポジトリのプロンプト・ツール定義・Supabaseスキーマを使って、実際に自分の手で（または用意された共有基盤に相乗りする形で）同じ構成を組み上げます。
+
+### 登場するAIエージェント
+
+| エージェント | 役割 | Difyアプリ種別 |
+| --- | --- | --- |
+| コンシェルジュ | お客様と直接対話する窓口AI。裏の専門家に調査を依頼し、結果を接客の言葉に言い換えて返す | Chatflow（内部にAgentノード） |
+| 専門家A | 利用規約・プライバシーポリシー・利用マニュアルの案内（RAG的な参照のみ、実行系の処理はしない） | Agent（ベータ版） |
+| 専門家B | 注文・商品データの照会と、注文キャンセル／返品リクエスト／おすすめ商品提案など、お客様個人データに対する実処理 | Agent（ベータ版） |
+| 専門家C | 配送状況の照会（ポチッとモールとは別会社という設定の配送会社データを参照） | Agent（ベータ版） |
+
+ハンズオンの前半（コンシェルジュ＋専門家A・B）はDSLインポートで一気に構築し、後半で専門家Cだけをあえて完全手動で構築することで、「Agentic AI ＝ 役割分担の追加は既存のエージェントを壊さずにできる」という疎結合設計のメリットを体感する構成になっています（専門家Cは当日ハンズオン中に手動で構築する想定のため、本リポジトリには専門家Cのプロンプト・ツール定義のみを事前に用意してあります）。
+
+### 設計上のポイント（疎結合／Orchestrator-Workers構成）
+
+コンシェルジュ（Orchestrator）は各専門家（Workers）の内部の業務ロジック（本人確認が必要な処理はどれか、テーブルがどう正規化されているか等）を一切知りません。知っているのは各専門家ツールの「インターフェース」（Custom ToolのOpenAPIスキーマの`description`に書かれた、何を依頼できるツールかという説明）だけです。専門家が追加の情報（本人確認情報など）を必要とする場合は、専門家自身がその場で気づいてコンシェルジュに聞き返し、コンシェルジュはその回答を見てお客様に聞き直す、という「リアクティブ」な設計にしてあります。これにより、専門家Cのような新しいエージェントを後から追加しても、コンシェルジュ側のプロンプトは一切変更する必要がありません。
 
 ## 2. フォルダ構成
 
-- dify: Dify の構築用コード (DSL)
-- supabase: Supabase の構築用コード (DDL, DML)
-  - `ec_schema.sql`：ECサイトDB用Project（専門家B）のテーブル・ビュー定義
-  - `ec_seed.sql`：ECサイトDB用のダミーデータ投入（INSERT文）
-  - `delivery_schema.sql`：配送会社DB用Project（専門家C）のテーブル定義
-  - `delivery_seed.sql`：配送会社DB用のダミーデータ投入（INSERT文）
+```
+.
+├── README.md              このファイル
+├── docs/
+│   ├── 1-supabase.md       Supabaseの構築手順
+│   └── 2-dify.md           Difyの構築手順
+├── dify/                   各Difyアプリの設定素材（プロンプト・カスタムツール定義）
+│   ├── concierge_prompt.md         コンシェルジュのシステムプロンプト
+│   ├── expert_a_prompt.md          専門家Aのシステムプロンプト
+│   ├── expert_a_tool_schema.json   コンシェルジュ用カスタムツール（専門家A呼び出し）のOpenAPIスキーマ
+│   ├── expert_b_prompt.md          専門家Bのシステムプロンプト
+│   ├── expert_b_tool_schema.json   コンシェルジュ用カスタムツール（専門家B呼び出し）のOpenAPIスキーマ
+│   ├── expert_c_prompt.md          専門家Cのシステムプロンプト
+│   └── expert_c_tool_schema.json   コンシェルジュ用カスタムツール（専門家C呼び出し）のOpenAPIスキーマ
+├── knowledge/               専門家Aに読み込ませる参照ドキュメント
+│   ├── terms_of_service.md         利用規約
+│   ├── privacy_policy.md           プライバシーポリシー
+│   └── user_manual.md              利用マニュアル
+└── supabase/                Supabaseの構築用コード（DDL・DML）
+    ├── ec_schema.sql               ECサイトDB用Project（専門家B用）のテーブル・ビュー定義
+    ├── ec_seed.sql                 ECサイトDB用のダミーデータ投入
+    ├── delivery_schema.sql         配送会社DB用Project（専門家C用）のテーブル定義
+    ├── delivery_seed.sql           配送会社DB用のダミーデータ投入
+    └── fix_expose_tables.sql       テーブル・ビューをData API（PostgREST）に公開するためのGRANT文
+```
+
+`dify/`配下のファイルはDifyアプリの自動インポート用ではなく、Difyの画面上で手動で貼り付ける／設定するための「素材」です（システムプロンプトはAgent/Chatflowの指示欄にコピー＆ペースト、`*_tool_schema.json`はコンシェルジュのCustom Tool作成時にスキーマとして貼り付けます）。ファイルを編集しても、Dify側の設定は自動的には更新されないため、変更した際はDify側への再設定を忘れないようにしてください。
 
 ## 3. 構築手順
 
-1. Supabaseで **ECサイトDB用のProject** と **配送会社DB用のProject** を、それぞれ別々に作成する
-2. ECサイトDB用ProjectのSQL Editorで `supabase/ec_schema.sql` → `supabase/ec_seed.sql` の順に実行し、テーブル・ビューの作成とダミーデータの投入を行う
-3. 配送会社DB用ProjectのSQL Editorで `supabase/delivery_schema.sql` → `supabase/delivery_seed.sql` の順に実行する
-4. Difyで公式Supabaseプラグインをインストールし、ECサイトDB用Project・配送会社DB用Projectそれぞれの「プロジェクトURL」と「service_roleキー」を使って認証情報を設定する
-5. 専門家B・専門家Cのエージェントに、対応するSupabaseツール（Get Rows / Update Row(s) 等）を追加し、各SQLファイルに記載の「ツール呼び出し規約」（フィルタ条件の付け方、本人確認の手順など）に沿ってプロンプトを設計する
+1. **[docs/1-supabase.md](docs/1-supabase.md)** に沿って、Supabaseに2つのProject（ECサイトDB用・配送会社DB用）を構築する
+2. **[docs/2-dify.md](docs/2-dify.md)** に沿って、Difyにコンシェルジュ＋専門家A・B・Cの4アプリを構築し、つなぎこみを行う
 
-詳細な設計判断の経緯（GASからSupabaseへ移行した理由など）は、プロジェクトの検討メモ（Claude Project）を参照。
+## 4. データストアについて
+
+専門家B・専門家Cが扱うデータはSupabase（PostgreSQL）に置いています。ECサイトDBと配送会社DBは「別会社が運営する別システム」という設定のため、Supabaseの**Projectを2つ**に分けています（1 Project = 1 Postgresデータベースのため）。Difyの公式Supabaseプラグイン（Get Rows / Create a Row / Update Row(s) / Delete Row(s)）をカスタムツールとして各専門家エージェントに持たせ、固定のHTTPノードではなくエージェント自身が自律的にツールを呼び出す構成にしています。
+
+## 5. 参考
+
+設計判断の詳しい経緯（GASからSupabaseへ移行した理由、疎結合設計の考え方、当日までに見つかったバグとその修正など）は、プロジェクトの検討メモ（Claude Project「水曜のDX道場」）を参照してください。

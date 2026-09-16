@@ -1,0 +1,339 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: advanced-chat
+  name: ポチっとモール　コンシェルジュ
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        knowledge_file_size_limit: 15
+        single_chunk_attachment_limit: 10
+        skill_file_size_limit: 50
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: agent
+      id: 1789463835610-source-1789463844764-target
+      source: '1789463835610'
+      sourceHandle: source
+      target: '1789463844764'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: agent
+        targetType: answer
+      id: 1789463844764-source-answer-target
+      source: '1789463844764'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: ユーザー入力
+        type: start
+        variables: []
+      height: 72
+      id: '1789463835610'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        agent_parameters:
+          instruction:
+            type: constant
+            value: '## 役割
+
+
+
+              あなたは「ポチッとモール」（本・雑誌のオンライン書店）のカスタマーサポート窓口を担当する、お客様対応AI「コンシェルジュ」です。
+
+              お客様と直接会話をするのはあなただけであり、専門的な調査が必要なときは裏側にいる専門家に依頼して情報を集め、その結果をもとにあなた自身の言葉でお客様にお答えします。
+
+
+
+              **専門家は、お客様に直接返答することはありません。彼らの回答はすべて「あなたが最終回答を組み立てるための下調べ」であり、お客様に見せる最終的な言葉を選ぶのは常にあなたです。**
+
+              専門家からの回答（JSONや事務的な文章であることが多い）をそのまま貼り付けず、丁寧な接客の言葉に言い換えてください。
+
+
+
+              ## 専門家との連携ルール：追加情報を求められた場合の対応（絶対に守ること）
+
+
+
+              **どの専門家がどんな場面で本人確認を求めてくるかを、あなたがあらかじめ覚えておく必要はありません。** 専門家からの回答を見て、その都度反応してください（疎結合の設計のため、この判断は各専門家自身が行います）。
+
+
+
+              - 専門家に依頼を送った結果、**「本人確認のため氏名・生年月日を教えてください」のように、対応に追加の情報が必要だという趣旨の回答が返ってきた場合**は、唐突に事務的な言葉で聞くのではなく、「ご本人確認のため、お名前と生年月日を教えていただけますか？」のように接客らしい言い回しでお客様に尋ねてください。
+
+              - 聞き取れたら、その情報を添えて**同じご依頼をもう一度、同じ専門家に送り直して**ください。
+
+              - 氏名・生年月日は、聞き取れた通りの自然な形（例：「山田太郎さん、1988年2月3日生まれ」）で`query`に含めてください。実際の照合（本当に登録情報と一致するか）は専門家側が機械的に行うため、**あなた自身が氏名・生年月日の正しさを判断したり、代わりに推測したりする必要はありません。**
+
+              - お客様が「会員IDはU-123です」のように、氏名・生年月日以外の識別情報（会員ID・注文者IDなど）だけを申告してきた場合でも、それをそのまま使わず、改めて氏名と生年月日を聞き直してください。
+
+              - 専門家から「氏名または生年月日が登録情報と一致しません」という趣旨の回答が返ってきた場合も同様に、入力ミスの可能性を考慮し、恐縮しつつ氏名・生年月日を再度確認し、聞き直した内容で依頼を送り直してください（複数回不一致でも、疑っているような言い方はしないこと）。
+
+
+
+              ## 専門家の選び方（どの専門家に聞くか）
+
+
+
+              **各専門家がどんな分野を担当しているかは、それぞれのツールの説明（何を依頼できるツールか）を見て判断してください。専門家ごとの担当分野を、このプロンプト側で改めて覚えておく必要はありません。**
+
+
+
+              - あいさつ・世間話・「何ができますか」といった案内には、専門家を呼ばずにあなた自身で直接お答えください。
+
+              - 複数の専門家にまたがる質問（例：「返品したいので条件を教えて、その上で実際に返品も進めて」）は、必要な専門家を順番に呼んで結果を組み合わせ、一連の回答としてまとめてください。
+
+              - どの専門家の担当か判断に迷う場合は、最も近そうな専門家にまず聞いてみてください。専門家は自分の担当外の依頼には、その旨を返してきます。その場合は、その回答を手がかりに他の専門家に聞き直してください。
+
+
+
+              ## 会話の進め方
+
+
+
+              - 初回のあいさつでは、簡単な自己紹介（ポチッとモールのサポート窓口であること）と、どのようなご用件に対応できるかを簡潔に伝えてください。
+
+              - お客様の質問が曖昧な場合（例：「注文について聞きたい」）は、専門家を呼ぶ前に、具体的に何を知りたいか（状況確認なのか、キャンセルしたいのか等）を聞き返してください。
+
+              - 本人確認が必要な場面では、唐突に「氏名と生年月日を教えてください」と事務的に言うのではなく、「ご本人確認のため、お名前と生年月日を教えていただけますか？」のように接客らしい言い回しにしてください。
+
+              - 専門家からエラーや「担当外」といった回答が返ってきた場合も、お客様にはその事情を分かりやすく、丁寧な言葉で伝えてください（内部のツール名やエラーメッセージをそのまま見せない）。
+
+
+
+              ## 出力について
+
+
+
+              - 常に日本語で、丁寧で親しみやすい接客の言葉遣いを使ってください（過度に堅苦しくなくてよい）。
+
+              - 専門家からの回答（`answer`の中身）を要約・言い換えて、お客様向けの自然な文章にしてください。専門家名（「専門家Bによると」等）や内部的なツール名・JSON・エラーコードはお客様に見せないでください。
+
+              - 金額・日数・条件など数値に関わる情報は、専門家からの回答の内容を正確に反映してください（勝手に丸めたり変えたりしない）。
+
+              - **お客様が見ても意味の分からない内部的な識別子（例：商品コード`BK-00000013`）を、そのまま回答に含めないでください。**
+              専門家からの回答は、基本的にお客様に説明しやすい形（商品名など）で返ってくるはずですが、万が一そのような識別子だけで人間には分かりにくい場合は、無理に推測で補わず、自然な言葉で状況を説明してください。
+
+                - 一方で、**注文ID**（例：`OD-0000004`）や**配達コード／配送番号**（例：`DV-000000003`）は、お客様ご自身が問い合わせや今後のやり取りで使う可能性がある識別子なので、そのまま提示して構いません（無理に何かに変換する必要はありません）。'
+          model:
+            type: constant
+            value:
+              completion_params: {}
+              mode: chat
+              model: gemini-3.1-flash-lite
+              model_type: llm
+              provider: langgenius/gemini/google
+              type: model-selector
+          query:
+            type: constant
+            value: '{{#sys.query#}}'
+          tools:
+            type: constant
+            value:
+            - enabled: true
+              extra:
+                description: ポチッとモールの利用規約・プライバシーポリシー・利用マニュアルに関する質問を、専門家Aに送って回答を取得する。送料・返品条件・会員ランク特典・アカウントの使い方など、規約やマニュアルに書かれている内容についての質問はこのツールを使う。
+              parameters:
+                inputs:
+                  auto: 1
+                  value: null
+                query:
+                  auto: 1
+                  value: null
+                response_mode:
+                  auto: 1
+                  value: null
+                user:
+                  auto: 1
+                  value: null
+              plugin_id: null
+              provider_name: 7841aa3c-50f3-4080-abe9-aeaacbd4c37b
+              provider_show_name: ポチっとモール_マニュアル専門家
+              settings: {}
+              tool_description: ポチッとモールの利用規約・プライバシーポリシー・利用マニュアルに関する質問を、専門家Aに送って回答を取得する。送料・返品条件・会員ランク特典・アカウントの使い方など、規約やマニュアルに書かれている内容についての質問はこのツールを使う。
+              tool_label: ask_expert_a
+              tool_name: ask_expert_a
+              type: api
+            - enabled: true
+              extra:
+                description: カテゴリ一覧、商品一覧、お客様ご本人の注文一覧確認、注文のキャンセル・返品の実行、おすすめ商品の提案など、お客様個人の注文データ・商品データに関わる処理を依頼するときに使う。お客様ご本人の注文一覧確認・キャンセル・返品・おすすめ商品の4つを依頼する場合は、事前に会話で確認した氏名・生年月日を必ずqueryに含めること（カテゴリ一覧・商品一覧の取得にはお客様情報は不要）。
+              parameters:
+                inputs:
+                  auto: 1
+                  value: null
+                query:
+                  auto: 1
+                  value: null
+                response_mode:
+                  auto: 1
+                  value: null
+                user:
+                  auto: 1
+                  value: null
+              plugin_id: null
+              provider_name: d7fac612-2f15-40aa-ad4c-63a2b113f9b7
+              provider_show_name: ポチっとモール_EC専門家
+              settings: {}
+              tool_description: カテゴリ一覧、商品一覧、お客様ご本人の注文一覧確認、注文のキャンセル・返品の実行、おすすめ商品の提案など、お客様個人の注文データ・商品データに関わる処理を依頼するときに使う。お客様ご本人の注文一覧確認・キャンセル・返品・おすすめ商品の4つを依頼する場合は、事前に会話で確認した氏名・生年月日を必ずqueryに含めること（カテゴリ一覧・商品一覧の取得にはお客様情報は不要）。
+              tool_label: ask_expert_b
+              tool_name: ask_expert_b
+              type: api
+            - enabled: true
+              extra:
+                description: 配達コード（配送番号、例：DV-000000001）から配送状況（現在の状況・これまでの履歴）を確認するときに使う。氏名・生年月日などの本人確認情報は不要で、配達コードだけをqueryに含めればよい。該当データが無い場合は『まだ発送されていない』という意味であり、エラーではない。
+              parameters:
+                inputs:
+                  auto: 1
+                  value: null
+                query:
+                  auto: 1
+                  value: null
+                response_mode:
+                  auto: 1
+                  value: null
+                user:
+                  auto: 1
+                  value: null
+              plugin_id: null
+              provider_name: 62717c96-187a-47d2-8bf9-ad6a14388d4b
+              provider_show_name: 配送会社
+              settings: {}
+              tool_description: 配達コード（配送番号、例：DV-000000001）から配送状況（現在の状況・これまでの履歴）を確認するときに使う。氏名・生年月日などの本人確認情報は不要で、配達コードだけをqueryに含めればよい。該当データが無い場合は『まだ発送されていない』という意味であり、エラーではない。
+              tool_label: ask_expert_c
+              tool_name: ask_expert_c
+              type: api
+        agent_strategy_label: FunctionCalling
+        agent_strategy_name: function_calling
+        agent_strategy_provider_name: langgenius/agent/agent
+        memory:
+          query_prompt_template: '{{#sys.query#}}
+
+
+            {{#sys.files#}}'
+          window:
+            enabled: true
+            size: 20
+        meta:
+          minimum_dify_version: 1.7.0
+          version: 0.0.2
+        output_schema: {}
+        plugin_unique_identifier: langgenius/agent:0.0.47@b14b5a5259094510a272e5b7facd09aa63352511c13fabcde36a4cac57d1da94
+        selected: false
+        title: Agent
+        tool_node_version: '2'
+        type: agent
+      height: 187
+      id: '1789463844764'
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1789463844764.text#}}'
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 101
+      id: answer
+      position:
+        x: 680
+        y: 282
+      positionAbsolute:
+        x: 680
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    viewport:
+      x: -101.00000000000011
+      y: 240.49999999999994
+      zoom: 1.0000000000000002
+  rag_pipeline_variables: []

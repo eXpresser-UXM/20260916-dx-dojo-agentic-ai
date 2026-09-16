@@ -1,0 +1,303 @@
+agent:
+  package_ref: agent_1
+agent_packages:
+  agent_1:
+    metadata:
+      description: ''
+      icon: 🧸
+      icon_background: '#F5F3FF'
+      icon_type: emoji
+      name: ポチッとモール-マニュアル検索専門家
+      role: ''
+    omitted_assets:
+    - hash: 1ca93dd6554c1a309993d83004243e4996c34618feb47b87e91574135e2bd43d
+      kind: file
+      mime_type: text/markdown
+      name: privacy_policy.md
+      size: 4427
+    - hash: 24634a7cc009aab632538af1a23c137653a28bff3b74f6af1a5c76b7bc4c3e8d
+      kind: file
+      mime_type: text/markdown
+      name: terms_of_service.md
+      size: 7424
+    - hash: 56fd38af96b2523e9601b3674f0b9440955645cd9fb80fc628225981b98bf042
+      kind: file
+      mime_type: text/markdown
+      name: user_manual.md
+      size: 15676
+    schema_version: 1
+    soul:
+      app_features:
+        file_upload:
+          allowed_file_extensions:
+          - JPG
+          - JPEG
+          - PNG
+          - GIF
+          - WEBP
+          - SVG
+          allowed_file_types:
+          - document
+          - image
+          - audio
+          - video
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          enabled: true
+          image:
+            enabled: true
+          number_limits: 3
+        opening_statement: null
+        retriever_resource: null
+        sensitive_word_avoidance: null
+        speech_to_text: null
+        suggested_questions: null
+        suggested_questions_after_answer: null
+        text_to_speech: null
+      app_variables: []
+      config_files:
+      - file_id: ''
+        file_kind: upload_file
+        hash: 1ca93dd6554c1a309993d83004243e4996c34618feb47b87e91574135e2bd43d
+        is_missing: true
+        mime_type: text/markdown
+        name: privacy_policy.md
+        size: 4427
+      - file_id: ''
+        file_kind: upload_file
+        hash: 24634a7cc009aab632538af1a23c137653a28bff3b74f6af1a5c76b7bc4c3e8d
+        is_missing: true
+        mime_type: text/markdown
+        name: terms_of_service.md
+        size: 7424
+      - file_id: ''
+        file_kind: upload_file
+        hash: 56fd38af96b2523e9601b3674f0b9440955645cd9fb80fc628225981b98bf042
+        is_missing: true
+        mime_type: text/markdown
+        name: user_manual.md
+        size: 15676
+      config_note: '# エージェント設定の概要
+
+
+        本エージェントは「ポチッとモール」の専門コンシェルジュAIとして、以下の知識ベースを用いて応答を行います。
+
+
+        ## 専門範囲
+
+        - 利用規約 (terms_of_service.md)
+
+        - プライバシーポリシー (privacy_policy.md)
+
+        - 利用マニュアル (user_manual.md)
+
+
+        ## 最重要ルール
+
+        - 知識ベースに存在しない情報は回答せず、推測を行わないこと。
+
+        - 知識ベース外の質問（個別の配送状況等）については、専門窓口への案内または専門外である旨をコンシェルジュへ伝えること。
+
+        - 回答は常にコンシェルジュ向けの簡潔な要約とし、根拠となる資料名を明記すること。
+
+        - 金額・数値は原文通り正確に引用すること。
+
+
+        ## 想定業務
+
+        - 送料、お支払い方法、キャンセル/返品条件、会員ランク制度、サイト利用手順、プライバシーに関する問い合わせへの根拠に基づく回答支援。
+
+        '
+      config_skills: []
+      env:
+        secret_refs: []
+        variables: []
+      human:
+        contacts: []
+        tools: []
+      knowledge:
+        sets: []
+      memory:
+        artifacts: []
+        budget: null
+        scope: null
+      misc_legacy:
+        file_upload:
+          allowed_file_extensions:
+          - JPG
+          - JPEG
+          - PNG
+          - GIF
+          - WEBP
+          - SVG
+          allowed_file_types:
+          - document
+          - image
+          - audio
+          - video
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          enabled: true
+          image:
+            enabled: true
+          number_limits: 3
+        opening_statement: null
+        retriever_resource: null
+        sensitive_word_avoidance: null
+        speech_to_text: null
+        suggested_questions: null
+        suggested_questions_after_answer: null
+        text_to_speech: null
+      model:
+        credential_ref: null
+        model: gemini-3.1-flash-lite
+        model_provider: langgenius/gemini/google
+        model_settings:
+          frequency_penalty: null
+          max_tokens: null
+          presence_penalty: null
+          response_format: null
+          stop: null
+          temperature: null
+          top_p: null
+        plugin_id: langgenius/gemini
+      prompt:
+        system_prompt: '## 役割
+
+
+
+          あなたは「ポチッとモール」（本・雑誌のオンライン書店、運営会社：株式会社ポチッとブックス）の利用規約・プライバシーポリシー・利用マニュアルを専門に扱うスペシャリストAIです。コンシェルジュAIからの依頼を受けて、あなたに読み込まれているナレッジ（利用規約・プライバシーポリシー・利用マニュアル）の内容をもとに調査し、結果をコンシェルジュに返します。**あなたが直接お客様に返答することはありません。**
+          回答は常に、コンシェルジュが顧客向けの返答を組み立てるために使える、正確で簡潔な情報として返してください。
+
+
+
+          ## 使えるナレッジ
+
+
+
+          Difyの「ファイル」機能で直接アップロードされた、以下3つのドキュメントが、あなたのシェル環境内の次のパスに配置されています。検索・参照する際は、`ls`等で場所を探し回らず、**必ず最初からこのパスを直接使って**ください（無駄な探索を省き、応答を速くするため）：
+
+
+
+          - **利用規約**：`.dify_conf/files/terms_of_service.md`（送料・お支払い方法・キャンセル/返品条件・禁止事項など）
+
+          - **プライバシーポリシー**：`.dify_conf/files/privacy_policy.md`（個人情報の取り扱いについて）
+
+          - **利用マニュアル**：`.dify_conf/files/user_manual.md`（全11章＋FAQ。サイトの使い方、会員ランク制度、各種手続きの手順など）
+
+
+
+          `grep`等で検索する際は、ファイル名だけ（例：`terms_of_service.md`）ではなく、必ず上記のフルパスを指定してください。万が一パスが変わっていて見つからない場合のみ、`ls
+          -R`で確認してください。
+
+
+
+          ツール（Get Rows等）は一切使いません。すべての回答はこれら3ファイルの内容のみを根拠にしてください。
+
+
+
+          ## 最重要ルール：ナレッジに無いことを答えない（絶対に守ること）
+
+
+
+          - **ナレッジベースの検索結果に含まれていない内容を、推測や一般知識で補って回答してはいけません。** これは今回のハンズオンが「RAG（第1回で扱った技術）の実例」でもあるため、特に厳格に守ってください。
+
+          - 検索しても該当する記載が見つからない場合は、正直に「ナレッジベース内にその情報が見当たりません」という趣旨をコンシェルジュに返し、憶測で埋めないでください。
+
+          - 個別の注文状況・配送状況・会員の個人データなど、**ナレッジベース（規約・マニュアル）ではなく動的なデータを聞かれた場合は、それは自分の担当範囲外である**旨を明確にコンシェルジュへ返してください（例：「注文はいつ届きますか」といった質問には対応できません、という趣旨で構いません。他のどの専門家が担当かをあなたが判断・案内する必要はありません）。
+
+          - 金額・日数・条件などの数値は、ナレッジベースの記載通り正確に引用してください（言い換えて数字を変えたり、丸めたりしない）。
+
+
+
+          ## 想定される質問カテゴリと回答方針
+
+
+
+          ### 1. 送料・お支払い方法について
+
+
+
+          利用規約の該当箇所を検索し、合計金額の条件（税込3,000円以上か未満か）による送料の違い、対応する支払い方法をそのまま正確に回答する。
+
+
+
+          ### 2. キャンセル・返品の条件について
+
+
+
+          利用規約の該当箇所を検索し、キャンセル可能な条件（発送前のみ）・返品可能な条件（発送済み・商品到着後の期限内のみ）・返送料の負担区分（不良品は当社負担、会員都合は自己負担）を回答する。**なお、実際にキャンセル・返品を「実行する」処理はあなたの担当ではありません。条件・ルールの説明のみを行ってください**（実行依頼が来た場合は、それが自分の担当外であることをコンシェルジュに伝えてください。他のどの専門家が担当かをあなたが判断・案内する必要はありません）。
+
+
+
+          ### 3. 会員ランク制度について
+
+
+
+          利用マニュアルの該当箇所を検索し、ブロンズ／シルバー／ゴールドの3段階の制度内容（年間利用金額に応じた条件・特典）を回答する。
+
+
+
+          ### 4. サイトの使い方・手続き手順について
+
+
+
+          利用マニュアルの該当する章を検索し、手順をわかりやすく整理して回答する。
+
+
+
+          ### 5. 個人情報の取り扱いについて
+
+
+
+          プライバシーポリシーの該当箇所を検索し、正確に回答する。
+
+
+
+          ### 6. 上記以外・ナレッジに無い質問
+
+
+
+          「ナレッジベース内に該当する記載が見当たらない」旨を正直にコンシェルジュへ返す。架空の窓口`support@pochitto-mall.example.com`への問い合わせを案内する形で構わない。
+
+
+
+          ## 出力について
+
+
+
+          - 常に日本語で、簡潔かつ正確に回答してください。
+
+          - ナレッジ検索結果の原文をそのまま長く貼り付けるのではなく、コンシェルジュが顧客に説明しやすい形に要約してください（ただし金額・日数などの数値は正確に）。
+
+          - 回答の根拠がナレッジベースのどの文書（利用規約／プライバシーポリシー／利用マニュアル）に基づくかが分かるよう、簡潔に触れてください（例：「利用規約によると〜」）。'
+      sandbox:
+        config:
+          cpu: null
+          env: []
+          image: null
+          working_dir: null
+        provider: null
+      schema_version: 1
+      tools:
+        cli_tools: []
+        dify_tools: []
+    workspace_skills: []
+app:
+  description: ''
+  icon: 🧸
+  icon_background: '#F5F3FF'
+  icon_type: emoji
+  mode: agent
+  name: ポチッとモール-マニュアル検索専門家
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.9.9@388b2516dbfdae482e46b6a221d18a99c3ea09e6d1aced21c71260194177f7b1
+    version: null
+kind: app
+version: 0.7.0

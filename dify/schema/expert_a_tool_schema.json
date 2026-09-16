@@ -1,0 +1,66 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "専門家A呼び出しツール",
+    "description": "ポチッとモールの専門家A(マニュアル・利用規約スペシャリスト)に質問を送り、回答を取得するツール",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://api.dify.ai/v1" }
+  ],
+  "paths": {
+    "/chat-messages": {
+      "post": {
+        "operationId": "ask_expert_a",
+        "summary": "専門家A(マニュアル・利用規約スペシャリスト)に質問する",
+        "description": "ポチッとモールの利用規約・プライバシーポリシー・利用マニュアルに関する質問を、専門家Aに送って回答を取得する。送料・支払い方法・キャンセル/返品の「条件・ルール」・会員ランク特典・アカウントの使い方など、規約やマニュアルに書かれている一般的な内容の説明はこのツールを使う。**このツールは規約・マニュアルの説明に特化しており、キャンセル・返品・注文確認などお客様個人のデータに対する実際の処理（実行）はできない。** そうした実行を伴う依頼には、個人の注文・商品データを扱う別のツールを使うこと。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query", "inputs", "response_mode", "user"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "専門家Aに聞きたい質問文。ユーザーの質問をそのまま、または必要な文脈を補って渡す。"
+                  },
+                  "inputs": {
+                    "type": "object",
+                    "description": "常に空オブジェクトを指定する（このアプリには入力変数が無いため）",
+                    "default": {}
+                  },
+                  "response_mode": {
+                    "type": "string",
+                    "enum": ["streaming"],
+                    "default": "streaming",
+                    "description": "常に streaming を指定する（専門家AはAgentアプリのためblockingは使えない）"
+                  },
+                  "user": {
+                    "type": "string",
+                    "description": "呼び出し元の識別子。固定の文字列でよい。",
+                    "default": "concierge"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "専門家Aからの回答（streaming指定のため、実際にはSSE形式の生テキストが返る。1行ごとに`data: {...}`という形式で複数のJSONイベントが並んでおり、`event`が`agent_message`または`message`のものの`answer`フィールドを順につなげたものが最終的な回答本文になる）",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "SSE形式の生レスポンス。専門家Aの回答本文を組み立てるには、この中から`answer`フィールドを拾って連結すること。"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

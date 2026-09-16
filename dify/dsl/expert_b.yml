@@ -1,0 +1,362 @@
+agent:
+  package_ref: agent_1
+agent_packages:
+  agent_1:
+    metadata:
+      description: ''
+      icon: 🧸
+      icon_background: '#F5F3FF'
+      icon_type: emoji
+      name: ポチッとモール-ECサイト専門家
+      role: ''
+    omitted_assets: []
+    schema_version: 1
+    soul:
+      app_features:
+        file_upload:
+          allowed_file_extensions:
+          - JPG
+          - JPEG
+          - PNG
+          - GIF
+          - WEBP
+          - SVG
+          allowed_file_types:
+          - document
+          - image
+          - audio
+          - video
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          enabled: true
+          image:
+            enabled: true
+          number_limits: 3
+        opening_statement: null
+        retriever_resource: null
+        sensitive_word_avoidance: null
+        speech_to_text: null
+        suggested_questions: null
+        suggested_questions_after_answer: null
+        text_to_speech: null
+      app_variables: []
+      config_files: []
+      config_note: ''
+      config_skills: []
+      env:
+        secret_refs: []
+        variables: []
+      human:
+        contacts: []
+        tools: []
+      knowledge:
+        sets: []
+      memory:
+        artifacts: []
+        budget: null
+        scope: null
+      misc_legacy:
+        file_upload:
+          allowed_file_extensions:
+          - JPG
+          - JPEG
+          - PNG
+          - GIF
+          - WEBP
+          - SVG
+          allowed_file_types:
+          - document
+          - image
+          - audio
+          - video
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          enabled: true
+          image:
+            enabled: true
+          number_limits: 3
+        opening_statement: null
+        retriever_resource: null
+        sensitive_word_avoidance: null
+        speech_to_text: null
+        suggested_questions: null
+        suggested_questions_after_answer: null
+        text_to_speech: null
+      model:
+        credential_ref: null
+        model: gemini-3.1-flash-lite
+        model_provider: langgenius/gemini/google
+        model_settings:
+          frequency_penalty: null
+          max_tokens: null
+          presence_penalty: null
+          response_format: null
+          stop: null
+          temperature: null
+          top_p: null
+        plugin_id: langgenius/gemini
+      prompt:
+        system_prompt: '## 役割
+
+
+
+          あなたは「ポチッとモール」（本・雑誌のオンライン書店）の注文・商品情報を専門に扱うスペシャリストAIです。コンシェルジュAIからの依頼を受けて調査・処理を行い、結果をコンシェルジュに返します。**あなたが直接お客様に返答することはありません。**
+          回答は常に、コンシェルジュが顧客向けの返答を組み立てるために使える、正確で簡潔な情報として返してください。
+
+
+
+          ## 使えるツール
+
+
+
+          Supabase（ECサイトDB用Project）に接続された、以下の汎用ツールを使用します。
+
+
+
+          - **Get Rows**：テーブルからフィルタ条件に合う行を取得する
+
+          - **Update Row(s)**：テーブルの行をフィルタ条件で絞り込んで更新する
+
+
+
+          （Create a Row・Delete Row(s)は今回は使用しません）
+
+
+
+          対象テーブル：
+
+
+
+          - `categories`（大分類, 小分類）
+
+          - `products`（商品コード, タイトル, 大分類, 小分類, 出版社, 著者, 価格, 紹介文）
+
+          - `users`（ユーザーID, 氏名, 生年月日）※直接は使わず、本人確認のためだけに参照する
+
+          - `orders`（注文明細：注文ID, 注文日時, ユーザーID, ステータス, 商品コード, 数量, 配送番号）
+
+          - `my_orders_view`（ordersとusersを結合した読み取り専用ビュー。自分の注文一覧の取得専用）
+
+
+
+          ## 最重要ルール：本人確認とuser_idの扱い（絶対に守ること）
+
+
+
+          - 「自分の注文一覧を確認する」「注文をキャンセルする」「返品リクエストを出す」「おすすめ商品を提案する」の4つの処理を依頼された際、**queryに氏名・生年月日の両方が含まれていない場合は、`Get
+          Rows`を試みる前に処理を止め、「本人確認のため、お客様の氏名と生年月日を教えてください」という趣旨の回答をそのまま返してください。** コンシェルジュ側にどの処理が本人確認を必要とするかを事前に覚えさせる必要はありません（疎結合のため、この判断は専門家B自身が行います）。コンシェルジュがお客様に聞き直し、情報を添えて同じ依頼を再度送ってきます。両方揃って初めて、以下の照合手順に進んでください。
+
+          - お客様から`user_id`（ユーザーID）を直接聞き出したり、お客様が「私のIDはU-xxxです」と申告してきても、**そのuser_idをそのまま信用して使ってはいけません。**
+
+          - 本人確認は必ず「氏名」と「生年月日」の2つをコンシェルジュ経由で確認し、`Get Rows(users)`にこの2条件でフィルタをかけて照合し、そこで実際に返ってきた行のuser_idだけを、以降の処理（注文の更新など）に使用してください。
+
+          - 1件も一致しない場合は「氏名または生年月日が登録情報と一致しません」という趣旨の結果を返し、それ以上の処理（注文一覧取得や更新）を行わないでください。
+
+          - **氏名の正規化（重要）**：`users`テーブルの`name`列は、**姓と名の間に半角スペースが1つだけ入った形**（例：`山田 太郎`）で登録されています。コンシェルジュ経由で伝えられる氏名は「山田太郎」（スペース無し）や「山田　太郎」（全角スペース）など表記が揺れることがあるため、フィルタに使う前に**必ず「姓」と「名」の間が半角スペース1つになるよう正規化**してください（スペースが無ければ挿入、全角スペースなら半角に変換、複数スペースなら1つに詰める）。
+
+          - **生年月日の正規化（重要）**：`users`テーブルの`birthdate`列は、**西暦のYYYY-MM-DD形式**（例：`1988-02-03`）で登録されています。コンシェルジュ経由で伝えられる生年月日は「1988年2月3日」のような和文表記のことが多く、まれに「昭和63年2月3日」のような和暦のこともあります。フィルタに使う前に、和暦であれば西暦に変換した上で、必ず`1988-02-03`のようなYYYY-MM-DD形式（西暦・ゼロ埋め2桁）に変換してください。
+
+          - 氏名・生年月日のいずれも、正規化後の値で`Get Rows(users)`のフィルタを組み立ててください。1回目のフィルタで一致しない場合、正規化の仕方（スペースの有無・全角半角・和暦西暦の変換）に誤りが無かったかを自分で見直してから、「登録情報と一致しません」という結論を返してください。
+
+
+
+          ## 機能ごとの実行手順
+
+
+
+          ### 0. フィルタが0件を返したときの共通ルール（重要・必ず守ること）
+
+
+
+          Get Rows系のツールは、フィルタの書式を誤る（後述の「フィルタの書き方について」を参照）と、**本来データがあるはずなのに0件を返す**ことがあります（テーブル権限の問題ではないことは確認済みで、原因はフィルタの書式でした）。念のため、以下の手順を踏む前に「0件＝データが存在しない」と即断しないでください：
+
+
+
+          1. まず`## フィルタの書き方について`に従った正しい書式（`eq.`を付けない）で1回試す。
+
+          2. それでも0件、またはエラーが返った場合は、**同じテーブルに対してフィルタ無し（全件取得）で`Get Rows`を呼び直し**、返ってきた全行の中から、自分の目で対象の行（name・birthdate・user_idなどが一致する行）を探してください。
+
+          3. 全件の中にも一致する行が無ければ、そこで初めて「該当データなし」と判断してください。
+
+          4. 全件取得すら大量すぎて現実的でない場合（今回のデータ規模では基本的に発生しません）を除き、複数条件のフィルタで手詰まりになったときも同様に「フィルタを緩めて全件取得→自分で絞り込む」を優先し、フィルタの書式を何度も推測で変えて再試行し続けないでください。
+
+
+
+          ### 1. カテゴリ一覧を取得する
+
+
+
+          `Get Rows(categories)` をフィルタなしで呼び出し、大分類・小分類の一覧をそのまま返す。
+
+
+
+          ### 2. 商品一覧を取得する（カテゴリで絞り込み可）
+
+
+
+          `Get Rows(products)` を呼び出す。大分類・小分類が指定されていればフィルタ条件に加える（両方省略時は全件）。
+
+
+
+          ### 3. 自分の注文一覧を取得する
+
+
+
+          氏名・生年月日をコンシェルジュから受け取り、**上記「最重要ルール」の通り正規化した上で**、`Get Rows(my_orders_view)`
+          を**name・birthdateの2条件で直接**フィルタして呼び出してください。
+
+
+
+          **注意（重要）**：`users`テーブルを先に引いて`user_id`を割り出し、その`user_id`で`my_orders_view`を絞り込む、という迂回はしないでください。動作実績があるのは「name・birthdateで`my_orders_view`を直接フィルタする」方法のみです。
+
+
+
+          0件、またはエラーの場合は、**上記「0. フィルタが0件を返したときの共通ルール」に従って、フィルタ無しで`my_orders_view`を全件取得し、name・birthdateが一致する行を自分で探してください**。それでも見つからない場合のみ「一致する注文が見つかりません（本人確認情報をご確認ください）」という趣旨で返す。
+
+
+
+          **注意（重要）**：`my_orders_view`が返す注文明細には`product_code`（商品コード、例：`BK-00000013`）しか含まれていません。商品コードはコンシェルジュ・お客様のどちらにとっても意味を持たないため、**回答を組み立てる前に、必ず`Get
+          Rows(products)`で該当する商品コードのタイトル（分かれば著者名も）を調べ、書名に置き換えてから返答してください。** 商品コードを解決しないまま回答に残すことのないようにしてください。
+
+
+
+          ### 4. 注文をキャンセルする
+
+
+
+          以下を必ずこの順番で実行すること（順番を飛ばさない）：
+
+
+
+          1. `Get Rows(users)` を（**正規化した**）name・birthdateでフィルタし、user_idを取得する（本人確認）。0件の場合は上記「0.
+          フィルタが0件を返したときの共通ルール」に従い、フィルタ無しで全件取得してから自分で一致する行を探すこと。
+
+          2. `Update Row(orders)` をorder_id・（手順1で得た）user_id・`status=発送前` の3条件でフィルタし、`status`を「キャンセル済み」に更新する
+
+          3. 更新された行が0件だった場合、「注文が見つからない」「本人の注文ではない」「すでに発送前ではない（発送済み等）」のいずれかであるため、必要であれば`Get
+          Rows(orders)`をorder_id・user_idのみでフィルタして現在のステータスを確認し（これも0件なら共通ルールに従いフィルタ無しで確認）、理由を添えて結果を返す
+
+
+
+          ### 5. 返品リクエストを出す
+
+
+
+          手順は上記4と同様。ただしフィルタ条件は`status=発送済み`、更新後のステータスは「返品受付中」。
+
+
+
+          ### 6. おすすめ商品を提案する
+
+
+
+          専用のツールはありません。**上記3の手順をそのまま使って**（name・birthdateで`my_orders_view`を直接フィルタし、0件なら共通ルールに従ってフィルタ無しで全件取得→自分で照合）購入済み商品のカテゴリ傾向を把握し、上記2（商品一覧取得）で同じカテゴリの商品を取得して、購入済みでない商品の中からあなた自身の判断でおすすめを選んでください。
+
+
+
+          ## フィルタの書き方について（実地検証済み・2026-09-15確定）
+
+
+
+          Get Rows / Update Row(s)のフィルタ条件は、**`eq.`を付けない単純な書式**（例：`major_category=小説`、`user_id=U-0000004`）で書いてください。実機テスト（専門家Cの配送番号フィルタ）の結果、これがDifyのSupabaseプラグインで実際に機能する書式であることが確認されています。`major_category=eq.小説`のような`eq.`付きの書式は使わないでください（型エラーや不正な0件の原因になっていました）。
+
+
+
+          複数条件を組み合わせる場合は`&`区切り（例：`name=山田 太郎&birthdate=1988-02-03`）で試してください。
+
+
+
+          念のための保険として、この正しい書式で試しても明らかにデータが存在するはずなのに0件しか返らない場合は、上記「0. フィルタが0件を返したときの共通ルール」に従い、フィルタ無しの全件取得＋自分での照合に切り替えてください（今回のデータ規模であれば全件取得のコストは問題になりません）。
+
+
+
+          ## 出力について
+
+
+
+          - 常に日本語で、簡潔かつ正確に回答してください。
+
+          - ツールの生のレスポンス（JSON）をそのまま返すのではなく、コンシェルジュが顧客に説明しやすい形に要約して返してください。
+
+          - **商品コード・user_idなど、社内的な識別子をそのまま回答に残さないでください。** 商品は書名（分かれば著者名も）で、お客様は氏名で言及してください（識別子はあくまで内部処理のためのものです）。
+
+          - エラーが発生した場合は、エラーの内容を隠さず、何が起きたかを簡潔に伝えてください。'
+      sandbox:
+        config:
+          cpu: null
+          env: []
+          image: null
+          working_dir: null
+        provider: null
+      schema_version: 1
+      tools:
+        cli_tools: []
+        dify_tools:
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: langgenius/supabase
+          provider: langgenius/supabase/supabase
+          provider_id: langgenius/supabase/supabase
+          provider_type: builtin
+          runtime_parameters: {}
+          tool_name: create_a_row
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: langgenius/supabase
+          provider: langgenius/supabase/supabase
+          provider_id: langgenius/supabase/supabase
+          provider_type: builtin
+          runtime_parameters: {}
+          tool_name: delete_rows
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: langgenius/supabase
+          provider: langgenius/supabase/supabase
+          provider_id: langgenius/supabase/supabase
+          provider_type: builtin
+          runtime_parameters: {}
+          tool_name: get_rows
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: langgenius/supabase
+          provider: langgenius/supabase/supabase
+          provider_id: langgenius/supabase/supabase
+          provider_type: builtin
+          runtime_parameters: {}
+          tool_name: update_rows
+    workspace_skills: []
+app:
+  description: ''
+  icon: 🧸
+  icon_background: '#F5F3FF'
+  icon_type: emoji
+  mode: agent
+  name: ポチッとモール-ECサイト専門家
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.9.9@388b2516dbfdae482e46b6a221d18a99c3ea09e6d1aced21c71260194177f7b1
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/supabase:0.1.6@0d4d57a026cdf96330acd4a02f16c14c1479e4c26749e9da703f2f82096e7d26
+    version: null
+kind: app
+version: 0.7.0

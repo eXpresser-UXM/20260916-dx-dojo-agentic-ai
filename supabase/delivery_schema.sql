@@ -13,6 +13,20 @@ create table delivery_status (
 );
 
 -- ============================================================
+-- Data API（PostgREST）へのテーブル公開（重要・2026-09-14追記）
+-- ============================================================
+-- 2026年時点のSupabaseの仕様変更により、CREATE TABLEしただけでは
+-- Data API（Dify等が呼び出すREST API）にテーブルが自動公開されず、
+-- 明示的なGRANTが無いと下記のようなエラーになる：
+--   PGRST205 "Could not find the table 'public.xxx' in the schema cache"
+-- このため、テーブル作成後に必ず以下を実行すること。
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on all tables in schema public to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anon, authenticated, service_role;
+notify pgrst, 'reload schema';
+
+-- ============================================================
 -- Difyエージェント（専門家C）のツール呼び出し規約
 -- ============================================================
 -- ・配送状況取得：Get Rows(delivery_status) フィルタ：delivery_no

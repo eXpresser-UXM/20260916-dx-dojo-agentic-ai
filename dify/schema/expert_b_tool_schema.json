@@ -1,0 +1,66 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "専門家B呼び出しツール",
+    "description": "ポチッとモールの専門家B(注文・商品情報スペシャリスト)に質問・依頼を送り、回答を取得するツール",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://api.dify.ai/v1" }
+  ],
+  "paths": {
+    "/chat-messages": {
+      "post": {
+        "operationId": "ask_expert_b",
+        "summary": "専門家B(注文・商品情報スペシャリスト)に質問・依頼する",
+        "description": "カテゴリ一覧、商品一覧の取得に加え、お客様ご本人の注文一覧確認・注文のキャンセル/返品の実際の実行（データの変更を伴う処理）・おすすめ商品の提案など、お客様個人の注文データ・商品データに関わる処理を依頼するときに使う。**「キャンセル・返品の条件・ルールを知りたい」だけの、実行を伴わない一般的な説明の質問には、このツールではなく規約・マニュアルを扱う別のツールを使うこと。** お客様ご本人の注文一覧確認・キャンセル・返品・おすすめ商品の4つを依頼する場合は、事前に会話で確認できていれば氏名・生年月日をqueryに含めること。含めずに依頼した場合、本人確認情報が必要な旨の回答が返ってくることがあるので、その場合は聞き取って再度依頼すること（カテゴリ一覧・商品一覧の取得にはお客様情報は不要）。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query", "inputs", "response_mode", "user"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "専門家Bへの質問・依頼文。何をしたいか（一覧取得／キャンセル／返品／おすすめ等）と、必要なら氏名・生年月日・注文IDなどの情報を、分かる形で含めて渡す。"
+                  },
+                  "inputs": {
+                    "type": "object",
+                    "description": "常に空オブジェクトを指定する（このアプリには入力変数が無いため）",
+                    "default": {}
+                  },
+                  "response_mode": {
+                    "type": "string",
+                    "enum": ["streaming"],
+                    "default": "streaming",
+                    "description": "常に streaming を指定する（専門家BはAgentアプリのためblockingは使えない）"
+                  },
+                  "user": {
+                    "type": "string",
+                    "description": "呼び出し元の識別子。固定の文字列でよい。",
+                    "default": "concierge"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "専門家Bからの回答（streaming指定のため、実際にはSSE形式の生テキストが返る。1行ごとに`data: {...}`という形式で複数のJSONイベントが並んでおり、`event`が`agent_message`または`message`のものの`answer`フィールドを順につなげたものが最終的な回答本文になる）",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "SSE形式の生レスポンス。専門家Bの回答本文を組み立てるには、この中から`answer`フィールドを拾って連結すること。"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

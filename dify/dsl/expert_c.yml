@@ -1,0 +1,271 @@
+agent:
+  package_ref: agent_1
+agent_packages:
+  agent_1:
+    metadata:
+      description: ''
+      icon: 🧸
+      icon_background: '#F5F3FF'
+      icon_type: emoji
+      name: 配送会社-検索エージェント
+      role: ''
+    omitted_assets: []
+    schema_version: 1
+    soul:
+      app_features:
+        file_upload:
+          allowed_file_extensions:
+          - JPG
+          - JPEG
+          - PNG
+          - GIF
+          - WEBP
+          - SVG
+          allowed_file_types:
+          - document
+          - image
+          - audio
+          - video
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          enabled: true
+          image:
+            enabled: true
+          number_limits: 3
+        opening_statement: null
+        retriever_resource: null
+        sensitive_word_avoidance: null
+        speech_to_text: null
+        suggested_questions: null
+        suggested_questions_after_answer: null
+        text_to_speech: null
+      app_variables: []
+      config_files: []
+      config_note: ''
+      config_skills: []
+      env:
+        secret_refs: []
+        variables: []
+      human:
+        contacts: []
+        tools: []
+      knowledge:
+        sets: []
+      memory:
+        artifacts: []
+        budget: null
+        scope: null
+      misc_legacy:
+        file_upload:
+          allowed_file_extensions:
+          - JPG
+          - JPEG
+          - PNG
+          - GIF
+          - WEBP
+          - SVG
+          allowed_file_types:
+          - document
+          - image
+          - audio
+          - video
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          enabled: true
+          image:
+            enabled: true
+          number_limits: 3
+        opening_statement: null
+        retriever_resource: null
+        sensitive_word_avoidance: null
+        speech_to_text: null
+        suggested_questions: null
+        suggested_questions_after_answer: null
+        text_to_speech: null
+      model:
+        credential_ref: null
+        model: gemini-3.1-flash-lite
+        model_provider: langgenius/gemini/google
+        model_settings:
+          frequency_penalty: null
+          max_tokens: null
+          presence_penalty: null
+          response_format: null
+          stop: null
+          temperature: null
+          top_p: null
+        plugin_id: langgenius/gemini
+      prompt:
+        system_prompt: '## 役割
+
+
+
+          あなたは配送会社（「ポチッとモール」とは別会社という設定）の配送状況を専門に扱うスペシャリストAIです。コンシェルジュAIからの依頼を受けて配送状況を調査し、結果をコンシェルジュに返します。**あなたが直接お客様に返答することはありません。**
+          回答は常に、コンシェルジュが顧客向けの返答を組み立てるために使える、正確で簡潔な情報として返してください。
+
+
+
+          あなたが扱う配送状況は、ポチッとモール内部のデータではなく、**配送会社側が管理する外部のリアルタイム情報**という位置づけです。
+
+
+
+          ## 使えるツール
+
+
+
+          Supabase（配送会社DB用Project、専門家Bとは別のProject）に接続された、以下の汎用ツールを使用します。
+
+
+
+          - **Get Rows**：テーブルからフィルタ条件に合う行を取得する
+
+
+
+          対象テーブル：
+
+
+
+          - `delivery_status`（id, delivery_no＝配送番号, recorded_at＝記録日時, location＝所在地,
+          status＝ステータス）
+
+
+
+          1つの配送番号につき、荷物受領→発送→中継センター到着→中継センター出発→配達中→配達完了、という複数の記録（行）が時系列で積み上がっています。
+
+
+
+          ## 実行手順
+
+
+
+          ### 1. 配送状況を取得する
+
+
+
+          1. コンシェルジュから配達コード（配送番号、例：`DV-000000001`）を受け取る
+
+          2. `Get Rows(delivery_status)` をdelivery_noでフィルタして呼び出す
+
+          3. 結果を`recorded_at`（記録日時）の昇順で並べ、**最新の行のステータス・所在地**を「現在の状況」として、それ以前の行は「これまでの履歴」として整理する
+
+
+
+          ### 2. 該当データが0件だった場合
+
+
+
+          **0件＝エラーではなく「まだ発送されていない」という意味のある情報です。** 「その配送番号ではまだ発送処理が開始されていません（注文はキャンセル・返品等でなければ、発送準備中である可能性があります）」という趣旨で、正常な結果としてコンシェルジュに返してください。「見つかりませんでした」だけで終わらせず、必ず「＝未発送」という意味づけを添えること。
+
+
+
+          ## 本人確認について
+
+
+
+          配送状況は配達コード（配送番号）さえ分かれば照会できる設計です。氏名・生年月日による本人確認は不要です（配達コード自体が実質的な照会キーとして機能します）。
+
+
+
+          ## フィルタの書き方について（実地検証済み・2026-09-15確定）
+
+
+
+          Get Rowsのフィルタ条件は、**`eq.`を付けない単純な書式**（例：`delivery_no=DV-000000003`）で書いてください。実機テストの結果、これがDifyのSupabaseプラグインで実際に機能する書式であることが確認されています。`delivery_no=eq.DV-000000003`のような`eq.`付きの書式は使わないでください。
+
+
+
+          万が一、この書式でも明らかにデータが存在するはずなのに0件しか返らない場合は、フィルタなしで`Get Rows(delivery_status)`を全件取得し、delivery_noが一致する行を自分で探してください。
+
+
+
+          ## 出力について
+
+
+
+          - 常に日本語で、簡潔かつ正確に回答してください。
+
+          - ツールの生のレスポンス（JSON）をそのまま返すのではなく、コンシェルジュが顧客に説明しやすい形に要約してください（例：「現在『配達中』です。直近の記録は9/15
+          10:00、○○中継センターを出発、とのことです」）。
+
+          - 履歴をすべて羅列する必要はなく、最新状況を中心に、必要に応じて主要な通過点を簡潔に添える程度で構いません。
+
+          - エラーが発生した場合（0件＝未発送を除く）は、エラーの内容を隠さず、何が起きたかを簡潔に伝えてください。'
+      sandbox:
+        config:
+          cpu: null
+          env: []
+          image: null
+          working_dir: null
+        provider: null
+      schema_version: 1
+      tools:
+        cli_tools: []
+        dify_tools:
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: langgenius/supabase
+          provider: langgenius/supabase/supabase
+          provider_id: langgenius/supabase/supabase
+          provider_type: builtin
+          runtime_parameters: {}
+          tool_name: create_a_row
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: langgenius/supabase
+          provider: langgenius/supabase/supabase
+          provider_id: langgenius/supabase/supabase
+          provider_type: builtin
+          runtime_parameters: {}
+          tool_name: delete_rows
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: langgenius/supabase
+          provider: langgenius/supabase/supabase
+          provider_id: langgenius/supabase/supabase
+          provider_type: builtin
+          runtime_parameters: {}
+          tool_name: get_rows
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: langgenius/supabase
+          provider: langgenius/supabase/supabase
+          provider_id: langgenius/supabase/supabase
+          provider_type: builtin
+          runtime_parameters: {}
+          tool_name: update_rows
+    workspace_skills: []
+app:
+  description: ''
+  icon: 🧸
+  icon_background: '#F5F3FF'
+  icon_type: emoji
+  mode: agent
+  name: 配送会社-検索エージェント
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.9.9@388b2516dbfdae482e46b6a221d18a99c3ea09e6d1aced21c71260194177f7b1
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/supabase:0.1.6@0d4d57a026cdf96330acd4a02f16c14c1479e4c26749e9da703f2f82096e7d26
+    version: null
+kind: app
+version: 0.7.0

@@ -1,0 +1,66 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "専門家C呼び出しツール",
+    "description": "配送会社の専門家C(配送追跡スペシャリスト)に質問を送り、回答を取得するツール",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://api.dify.ai/v1" }
+  ],
+  "paths": {
+    "/chat-messages": {
+      "post": {
+        "operationId": "ask_expert_c",
+        "summary": "専門家C(配送追跡スペシャリスト)に配送状況を問い合わせる",
+        "description": "配達コード（配送番号、例：DV-000000001）から配送状況（現在の状況・これまでの履歴）を確認するときに使う。氏名・生年月日などの本人確認情報は不要で、配達コードだけをqueryに含めればよい。該当データが無い場合は『まだ発送されていない』という意味であり、エラーではない。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query", "inputs", "response_mode", "user"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "専門家Cへの質問文。お客様から伺った配達コード（配送番号）を含めて渡す。"
+                  },
+                  "inputs": {
+                    "type": "object",
+                    "description": "常に空オブジェクトを指定する（このアプリには入力変数が無いため）",
+                    "default": {}
+                  },
+                  "response_mode": {
+                    "type": "string",
+                    "enum": ["streaming"],
+                    "default": "streaming",
+                    "description": "常に streaming を指定する（専門家CはAgentアプリのためblockingは使えない）"
+                  },
+                  "user": {
+                    "type": "string",
+                    "description": "呼び出し元の識別子。固定の文字列でよい。",
+                    "default": "concierge"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "専門家Cからの回答（streaming指定のため、実際にはSSE形式の生テキストが返る。1行ごとに`data: {...}`という形式で複数のJSONイベントが並んでおり、`event`が`agent_message`または`message`のものの`answer`フィールドを順につなげたものが最終的な回答本文になる）",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "SSE形式の生レスポンス。専門家Cの回答本文を組み立てるには、この中から`answer`フィールドを拾って連結すること。"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
